@@ -43,10 +43,10 @@ impl Writer{
 		}
 	}
 	pub fn write(&mut self,mut n:u128,mut v:u64){
-		debug_assert!(n<=(u64::MAX as u128+1));
+		debug_assert!(n<=Self::CAP);
 		while self.c*n>Self::CAP{
 			// Split n into two factors across the chunk boundary
-			let f0 = (u64::MAX as u128+1)/(self.c as u128);
+			let f0 = Self::CAP/(self.c as u128);
 			let f1 = n.div_ceil(f0);
 			let chunk=self.v+self.c as u64*(v%f0 as u64);
 			self.data.extend_from_slice(&mut chunk.to_le_bytes());
@@ -88,11 +88,11 @@ impl Reader<'_>{
 		}
 	}
 	pub fn read(&mut self,mut n:u128)->u64{
-		debug_assert!(n<=(u64::MAX as u128+1));
+		debug_assert!(n<=Self::CAP);
 		let mut v=0_u64;
 		let mut c=1_u128;
 		while n*self.c>=Self::CAP{
-			let f0 = (u64::MAX as u128+1)/(self.c as u128);
+			let f0 = Self::CAP/(self.c as u128);
 			let f1 = n.div_ceil(f0);
 			v+=c as u64*self.v;
 			c*=f0;
