@@ -1,5 +1,3 @@
-use std::io::Result;
-
 // #[derive(Default)]
 // struct State{
 // 	c:u64,
@@ -29,13 +27,13 @@ use std::io::Result;
 // }
 
 
-struct RangeBuffer{
+struct Writer{
 	data:Vec<u8>,
 	c:u128,
 	v:u64,
 }
 
-impl RangeBuffer{
+impl Writer{
 	const CAP:u128=1<<64;
 	pub fn new()->Self{
 		Self{
@@ -43,38 +41,6 @@ impl RangeBuffer{
 			c:1,
 			v:0,
 		}
-	}
-	pub fn read(&mut self,mut n:u128)->u64{
-		debug_assert!(n<=(u64::MAX as u128+1));
-		let mut v=0_u64;
-		let mut c=1_u128;
-		while n*self.c>Self::CAP{
-			let f0 = (u64::MAX as u128+1)/(self.c as u128);
-			let f1 = n.div_ceil(f0);
-			v+=c as u64*self.v;
-			c*=f0;
-			n=f1;
-
-			let bytes=[
-				self.data.pop().unwrap(),
-				self.data.pop().unwrap(),
-				self.data.pop().unwrap(),
-				self.data.pop().unwrap(),
-				self.data.pop().unwrap(),
-				self.data.pop().unwrap(),
-				self.data.pop().unwrap(),
-				self.data.pop().unwrap(),
-			];
-			// The list is reversed!
-			self.v=u64::from_be_bytes(bytes);
-			self.c=1;
-		}
-
-		v+=c as u64*(self.v%n as u64);
-		self.v/=n as u64;
-		self.c*=n;
-
-		v
 	}
 	pub fn write(&mut self,mut n:u128,mut v:u64){
 		debug_assert!(n<=(u64::MAX as u128+1));
@@ -104,22 +70,57 @@ impl RangeBuffer{
 		self.flush();
 		self.data
 	}
-	/// Finalize data with .flush() before getting a slice
-	pub fn as_slice(&self)->&[u8]{
-		self.data.as_slice()
+}
+
+struct Reader<'a>{
+	iter:std::slice::ChunksExact<'a,u8>,
+	c:u128,
+	v:u64,
+}
+
+impl Reader<'_>{
+	const CAP:u128=1<<64;
+	pub fn new<'a>(data:&'a [u8])->Reader<'a>{
+		Reader{
+			iter:data.chunks_exact(8),
+			c:Self::CAP,
+			v:0,
+		}
+	}
+	pub fn read(&mut self,mut n:u128)->u64{
+		debug_assert!(n<=(u64::MAX as u128+1));
+		let mut v=0_u64;
+		let mut c=1_u128;
+		while n*self.c>=Self::CAP{
+			let f0 = (u64::MAX as u128+1)/(self.c as u128);
+			let f1 = n.div_ceil(f0);
+			v+=c as u64*self.v;
+			c*=f0;
+			n=f1;
+			let bytes=self.iter.next().unwrap();
+			// The list is reversed!
+			self.v=u64::from_le_bytes(bytes.try_into().unwrap());
+			self.c=1;
+		}
+		v+=c as u64*(self.v%n as u64);
+		self.v/=n as u64;
+		self.c*=n;
+
+		v
 	}
 }
 
 #[test]
 fn the(){
-	let mut r=RangeBuffer::new();
+	let mut w=Writer::new();
 
-	r.write(3*2u128.pow(60),123);
-	r.write(3*2u128.pow(60),123);
+	w.write(3*2u128.pow(60),123);
+	w.write(3*2u128.pow(60),123);
 
-	r.flush();
-	let bytes=r.as_slice();
+	let bytes=w.take();
 	println!("{:?}",bytes);
+
+	let mut r=Reader::new(bytes.as_slice());
 
 	assert_eq!(r.read(3*2u128.pow(60)),123);
 	assert_eq!(r.read(3*2u128.pow(60)),123);
