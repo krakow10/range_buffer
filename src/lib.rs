@@ -34,7 +34,7 @@ struct Writer{
 }
 
 impl Writer{
-	const CAP:u128=1<<64;
+	const CAP:u128=1<<48;
 	pub fn new()->Self{
 		Self{
 			data:Vec::new(),
@@ -49,7 +49,7 @@ impl Writer{
 			let f0 = Self::CAP/(self.c as u128);
 			let f1 = n.div_ceil(f0);
 			let chunk=self.v+self.c as u64*(v%f0 as u64);
-			self.data.extend_from_slice(&mut chunk.to_le_bytes());
+			self.data.extend_from_slice(&mut chunk.to_le_bytes()[0..6]);
 			self.v=0;
 			self.c=1;
 			n=f1;
@@ -79,10 +79,10 @@ struct Reader<'a>{
 }
 
 impl Reader<'_>{
-	const CAP:u128=1<<64;
+	const CAP:u128=1<<48;
 	pub fn new<'a>(data:&'a [u8])->Reader<'a>{
 		Reader{
-			iter:data.chunks_exact(8),
+			iter:data.chunks_exact(6),
 			c:Self::CAP,
 			v:0,
 		}
@@ -99,7 +99,7 @@ impl Reader<'_>{
 			n=f1;
 			let bytes=self.iter.next().unwrap();
 			// The list is reversed!
-			self.v=u64::from_le_bytes(bytes.try_into().unwrap());
+			self.v=u64::from_le_bytes([bytes[0],bytes[1],bytes[2],bytes[3],bytes[4],bytes[5],0,0]);
 			self.c=1;
 		}
 		v+=c as u64*(self.v%n as u64);
@@ -114,14 +114,14 @@ impl Reader<'_>{
 fn the(){
 	let mut w=Writer::new();
 
-	w.write(3*2u128.pow(60),123);
-	w.write(3*2u128.pow(60),123);
+	w.write(3*2u128.pow(44),123);
+	w.write(3*2u128.pow(44),123);
 
 	let bytes=w.take();
 	println!("{:?}",bytes);
 
 	let mut r=Reader::new(bytes.as_slice());
 
-	assert_eq!(r.read(3*2u128.pow(60)),123);
-	assert_eq!(r.read(3*2u128.pow(60)),123);
+	assert_eq!(r.read(3*2u128.pow(44)),123);
+	assert_eq!(r.read(3*2u128.pow(44)),123);
 }
