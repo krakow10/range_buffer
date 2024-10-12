@@ -27,7 +27,7 @@
 // }
 
 
-struct Writer{
+pub struct Writer{
 	data:Vec<u8>,
 	c:u128,
 	v:u64,
@@ -72,7 +72,7 @@ impl Writer{
 	}
 }
 
-struct Reader<'a>{
+pub struct Reader<'a>{
 	iter:std::slice::ChunksExact<'a,u8>,
 	c:u128,
 	v:u64,
@@ -111,7 +111,7 @@ impl Reader<'_>{
 }
 
 #[test]
-fn the(){
+fn round_trip(){
 	let mut w=Writer::new();
 
 	w.write(3*2u128.pow(60),123);
