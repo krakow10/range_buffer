@@ -56,6 +56,7 @@ impl<W:Write> Writer<W>{
 			state:State::default(),
 		}
 	}
+	/// n is the number of possible values of v, like an enum
 	pub fn write(&mut self,mut n:u128,mut v:u64)->Result<()>{
 		debug_assert!(n<=Self::CAP);
 		while self.state.c*n>Self::CAP{
