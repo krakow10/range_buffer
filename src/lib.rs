@@ -5,7 +5,7 @@ struct State{
 	v:u64,
 }
 impl State{
-	const CAP:u128=1<<64;
+	const CAP:u128=1<<48;
 }
 
 pub struct Reader<R:Read>{
@@ -39,10 +39,10 @@ impl<R:Read> Reader<R>{
 			c*=f0;
 			n=f1;
 
-			let mut bytes=[0;8];
+			let mut bytes=[0;6];
 			self.source.read_exact(&mut bytes)?;
 			// The list is reversed!
-			self.state.v=u64::from_le_bytes(bytes);
+			self.state.v=u64::from_le_bytes([bytes[0],bytes[1],bytes[2],bytes[3],bytes[4],bytes[5],0,0]);
 			self.state.c=1;
 		}
 		v+=c as u64*(self.state.v%n as u64);
@@ -74,7 +74,7 @@ impl<W:Write> Writer<W>{
 			let f1=n.div_ceil(f0);
 			let chunk=self.state.v+self.state.c as u64*(v%f0 as u64);
 			//This needs to be 8 otherwise it's an error
-			self.sink.write_all(&chunk.to_le_bytes())?;
+			self.sink.write_all(&chunk.to_le_bytes()[0..6])?;
 			self.state.v=0;
 			self.state.c=1;
 			n=f1;
@@ -100,15 +100,15 @@ fn round_trip()->Result<()>{
 	let mut data:Vec<u8>=Vec::new();
 	let mut w=Writer::new(&mut data);
 
-	w.write(3*2u128.pow(60),123)?;
-	w.write(3*2u128.pow(60),123)?;
+	w.write(3*2u128.pow(44),123)?;
+	w.write(3*2u128.pow(44),123)?;
 
 	w.flush()?;
 
 	let mut r=Reader::new(std::io::Cursor::new(data));
 
-	assert_eq!(r.read(3*2u128.pow(60))?,123);
-	assert_eq!(r.read(3*2u128.pow(60))?,123);
+	assert_eq!(r.read(3*2u128.pow(44))?,123);
+	assert_eq!(r.read(3*2u128.pow(44))?,123);
 
 	Ok(())
 }
