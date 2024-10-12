@@ -97,19 +97,15 @@ impl<W:Write> Writer<W>{
 
 #[test]
 fn round_trip()->Result<()>{
-	// the writer does not resize the buffer, it assumes it has the capacity
-	let inner:Vec<u8>=vec![0;16];
-	let mut data=std::io::Cursor::new(inner);
+	let mut data:Vec<u8>=Vec::new();
 	let mut w=Writer::new(&mut data);
 
 	w.write(3*2u128.pow(60),123)?;
 	w.write(3*2u128.pow(60),123)?;
 
 	w.flush()?;
-	//reset cursor to 0
-	data.set_position(0);
 
-	let mut r=Reader::new(&mut data);
+	let mut r=Reader::new(std::io::Cursor::new(data));
 
 	assert_eq!(r.read(3*2u128.pow(60))?,123);
 	assert_eq!(r.read(3*2u128.pow(60))?,123);
@@ -118,19 +114,15 @@ fn round_trip()->Result<()>{
 }
 #[test]
 fn edge_case()->Result<()>{
-	// the writer does not resize the buffer, it assumes it has the capacity
-	let inner:Vec<u8>=vec![0;16];
-	let mut data=std::io::Cursor::new(inner);
+	let mut data:Vec<u8>=Vec::new();
 	let mut w=Writer::new(&mut data);
 
 	w.write(1<<64,123)?;
 	w.write(1<<64,123)?;
 
 	w.flush()?;
-	//reset cursor to 0
-	data.set_position(0);
 
-	let mut r=Reader::new(&mut data);
+	let mut r=Reader::new(std::io::Cursor::new(data));
 
 	assert_eq!(r.read(1<<64)?,123);
 	assert_eq!(r.read(1<<64)?,123);
