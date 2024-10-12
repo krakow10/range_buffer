@@ -93,6 +93,11 @@ impl<W:Write> Writer<W>{
 		Ok(())
 	}
 }
+impl<W:Write> Drop for Writer<W>{
+	fn drop(&mut self){
+		self.flush().unwrap()
+	}
+}
 
 #[test]
 fn round_trip()->Result<()>{
