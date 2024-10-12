@@ -41,7 +41,6 @@ impl<R:Read> Reader<R>{
 
 			let mut bytes=[0;8];
 			self.source.read_exact(&mut bytes)?;
-			// The list is reversed!
 			self.state.v=u64::from_le_bytes(bytes);
 			self.state.c=1;
 		}
