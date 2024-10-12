@@ -64,8 +64,9 @@ impl<W:Write> Writer<W>{
 			},
 		}
 	}
-	/// n is the number of possible values of v, like an enum
+	/// n is the number of possible values of v, like an enum. v should be less than n
 	pub fn write(&mut self,mut n:u128,mut v:u64)->Result<()>{
+		debug_assert!((v as u128)<n);
 		debug_assert!(n<=State::CAP);
 		while self.state.c*n>State::CAP{
 			// Split n into two factors across the chunk boundary
