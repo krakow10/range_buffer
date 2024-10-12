@@ -125,3 +125,18 @@ fn round_trip(){
 	assert_eq!(r.read(3*2u128.pow(60)),123);
 	assert_eq!(r.read(3*2u128.pow(60)),123);
 }
+#[test]
+fn edge_case(){
+	let mut w=Writer::new();
+
+	w.write(1<<64,123);
+	w.write(1<<64,123);
+
+	let bytes=w.take();
+	println!("{:?}",bytes);
+
+	let mut r=Reader::new(bytes.as_slice());
+
+	assert_eq!(r.read(1<<64),123);
+	assert_eq!(r.read(1<<64),123);
+}
