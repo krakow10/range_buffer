@@ -71,7 +71,8 @@ impl<W:Write> Writer<W>{
 			let f0=Self::CAP/(self.state.c as u128);
 			let f1=n.div_ceil(f0);
 			let chunk=self.state.v+self.state.c as u64*(v%f0 as u64);
-			self.sink.write(&chunk.to_le_bytes())?;
+			//This needs to be 8 otherwise it's an error
+			self.sink.write_all(&chunk.to_le_bytes())?;
 			self.state.v=0;
 			self.state.c=1;
 			n=f1;
@@ -85,7 +86,7 @@ impl<W:Write> Writer<W>{
 		let mut c=1_u128;
 		while c<self.state.c{
 			c<<=8;
-			self.sink.write(&[self.state.v as u8])?;
+			self.sink.write_all(&[self.state.v as u8])?;
 			self.state.v>>=8;
 		}
 		Ok(())
