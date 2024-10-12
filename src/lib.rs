@@ -1,6 +1,5 @@
 use std::io::{Read,Write,Result};
 
-#[derive(Default)]
 struct State{
 	c:u128,
 	v:u64,
@@ -20,7 +19,11 @@ impl<R:Read> Reader<R>{
 	pub fn new(source:R)->Self{
 		Self{
 			source,
-			state:State::default(),
+			state:
+			State{
+				c:Self::CAP,
+				v:0,
+			},
 		}
 	}
 	pub fn read(&mut self,mut n:u128)->Result<u64>{
@@ -53,7 +56,11 @@ impl<W:Write> Writer<W>{
 	pub fn new(sink:W)->Self{
 		Self{
 			sink,
-			state:State::default(),
+			state:
+			State{
+				c:1,
+				v:0,
+			},
 		}
 	}
 	/// n is the number of possible values of v, like an enum
@@ -87,7 +94,9 @@ impl<W:Write> Writer<W>{
 
 #[test]
 fn round_trip()->Result<()>{
-	let mut data=std::io::Cursor::new(Vec::<u8>::new());
+	// the writer does not resize the buffer, it assumes it has the capacity
+	let inner:Vec<u8>=vec![0;16];
+	let mut data=std::io::Cursor::new(inner);
 	let mut w=Writer::new(&mut data);
 
 	w.write(3*2u128.pow(60),123)?;
@@ -106,7 +115,9 @@ fn round_trip()->Result<()>{
 }
 #[test]
 fn edge_case()->Result<()>{
-	let mut data=std::io::Cursor::new(Vec::<u8>::new());
+	// the writer does not resize the buffer, it assumes it has the capacity
+	let inner:Vec<u8>=vec![0;16];
+	let mut data=std::io::Cursor::new(inner);
 	let mut w=Writer::new(&mut data);
 
 	w.write(1<<64,123)?;
