@@ -87,6 +87,8 @@ impl<W:Write> Writer<W>{
 		let mut c=1_u128;
 		while c<self.state.c{
 			c<<=8;
+			// If this actually flushes data, it won't be readable in chunks...
+			// TODO: fix read from non-chunk aligned data
 			self.sink.write_all(&[self.state.v as u8])?;
 			self.state.v>>=8;
 		}
